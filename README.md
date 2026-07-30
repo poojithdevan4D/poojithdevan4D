@@ -42,3 +42,5 @@ built and measured on a **4 GB laptop GPU (RTX 3050)**, not rented H100s.
 ---
 
 📫 **poojithdevan@gmail.com** · [LinkedIn](https://www.linkedin.com/in/poojith-devan) · building in public, one project at a time
+
+<!-- profile readme -->
