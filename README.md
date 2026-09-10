@@ -12,17 +12,32 @@ throwing a bigger instance at the problem.
 Research Intern at **OneBit** (1.58-bit ternary inference) and **Trebuchet
 System** (Q1.15 fixed-point inference for FPU-less hardware).
 
-Co-author on four papers, two on arXiv and one under review at IEEE TPAMI.
+Co-author on five papers, three on arXiv and one under review at IEEE TPAMI.
 
 ---
 
 ## What I have measured
 
+**[vllm-vs-hf-benchmark](https://github.com/poojithdevan4D/vllm-vs-hf-benchmark)** ·
+*vLLM vs HuggingFace, Tesla T4, Qwen2.5-0.5B fp16*
+An apples-to-apples answer to "do we actually need a serving engine". Three
+findings, and the useful one is not the one people expect:
+
+- **Load is the real case.** At 32 concurrent requests vLLM held p95 TTFT at
+  **65 ms against 3055 ms** for HuggingFace, a 47x gap, and cleared the queue in
+  **1.10 s against 246 s**.
+- **Raw throughput is the weaker case.** The advantage decays from **12.2x at
+  batch 1 to 3.2x at batch 64** as native batching catches up. Sizing on the
+  batch-1 number would badly oversell the migration.
+- **The cost nobody quotes:** vLLM preallocates its KV cache and reserves
+  **13.8 GB of a 15 GB T4** to serve a 0.5B model that HuggingFace runs in
+  **1.19 GB**. That rules out colocating anything else on the card, which is
+  often the constraint that decides the deployment.
+
 **[vllm-benchmark](https://github.com/poojithdevan4D/vllm-benchmark)** ·
 *vLLM, NVIDIA T4, load testing*
-Quantifies when continuous batching is worth a migration. vLLM reached **~790
-tok/s at batch 64, about 7x a GGUF backend's peak**, and was still scaling where
-GGUF had already turned over.
+Earlier comparison against a GGUF backend. vLLM reached **~790 tok/s at batch
+64, about 7x the GGUF peak**, and was still scaling where GGUF had turned over.
 
 **[serving-benchmark](https://github.com/poojithdevan4D/serving-benchmark)** ·
 *async load generation, concurrency sweep*
@@ -55,6 +70,12 @@ backend, so the same client works across deployment targets.
 
 ## Research
 
+- **Scaling Post-Training Ternarisation to Qwen3-8B** ([arXiv:2609.09240](https://arxiv.org/abs/2609.09240))
+  My contribution: the external reproduction gate, the lossless lattice-aware
+  packing to 8.24 GiB, and the direct packed-execution measurements, 15.52 tok/s
+  in 7.35 GiB. The 8B model holds **78.5% chance-corrected retention** against
+  69.6% for the matched 4B run, so scale buys robustness to aggressive
+  post-training discretisation.
 - **Post-Training Ternarization of Qwen3-4B** ([arXiv:2609.01962](https://arxiv.org/abs/2609.01962))
   My contribution: the lossless weight-packing path, 8.29 to 3.96 GiB at 1.641
   effective bits per weight, and the storage and bit-budget accounting.
@@ -63,6 +84,8 @@ backend, so the same client works across deployment targets.
   replaced biased default metrics. Chance correction mattered: it is what
   separates a model that has retained a capability from one that is guessing.
 - **SuperFloat** (under review, IEEE TPAMI) and **Cloe** (OneBit technical report).
+
+All three arXiv papers are joint work with Anirudh Malik and M Sparsh Mehra.
 
 **Ternary inference kernels (OneBit).** Made an 8B model deployable on a single
 12 GB consumer GPU instead of a 24 GB card, via a Triton kernel that multiplies
